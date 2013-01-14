@@ -1,71 +1,71 @@
 <?php
 
-use UriTemplate\Parser;
+use UriTemplate\Processor;
 
-class ParserTest extends PHPUnit_Framework_TestCase
+class ProcessorTest extends PHPUnit_Framework_TestCase
 {
 
     public function testNoExpressionsReturnsSameUri()
     {
-        $parser = new Parser('http://foo.com/hello/world', array());
+        $processor = new Processor('http://foo.com/hello/world', array());
 
-        $this->assertEquals('http://foo.com/hello/world', $parser->parse());
+        $this->assertEquals('http://foo.com/hello/world', $processor->process());
     }
 
     public function testSimpleExpansion()
     {
-        $parser = new Parser('http://foo.com/{var}', array('var' => 'Hello'));
-        $this->assertEquals('http://foo.com/Hello', $parser->parse());
+        $processor = new Processor('http://foo.com/{var}', array('var' => 'Hello'));
+        $this->assertEquals('http://foo.com/Hello', $processor->process());
 
-        $parser = new Parser('http://foo.com/{var}', array('var' => 'Hello World'));
-        $this->assertEquals('http://foo.com/Hello%20World', $parser->parse());
+        $processor = new Processor('http://foo.com/{var}', array('var' => 'Hello World'));
+        $this->assertEquals('http://foo.com/Hello%20World', $processor->process());
 
-        $parser = new Parser('http://foo.com/{non_existent}', array('var' => 'Hello'));
-        $this->assertEquals('http://foo.com/', $parser->parse());
+        $processor = new Processor('http://foo.com/{non_existent}', array('var' => 'Hello'));
+        $this->assertEquals('http://foo.com/', $processor->process());
 
-        $parser = new Parser('http://foo.com/{var}', array('var' => array(
+        $processor = new Processor('http://foo.com/{var}', array('var' => array(
             1, 2, 3
         )));
-        $this->assertEquals('http://foo.com/1,2,3', $parser->parse());
+        $this->assertEquals('http://foo.com/1,2,3', $processor->process());
 
-        $parser = new Parser('http://foo.com/{var}', array('var' => array(
+        $processor = new Processor('http://foo.com/{var}', array('var' => array(
             'foo' => 'bar',
             'baz' => 'yay',
         )));
-        $this->assertEquals('http://foo.com/foo,bar,baz,yay', $parser->parse());
+        $this->assertEquals('http://foo.com/foo,bar,baz,yay', $processor->process());
 
     }
 
     public function testSimpleExpansionWithMaxLen()
     {
-        $parser = new Parser('http://foo.com/{var:2}', array('var' => 'welcome'));
-        $this->assertEquals('http://foo.com/we', $parser->parse());
+        $processor = new Processor('http://foo.com/{var:2}', array('var' => 'welcome'));
+        $this->assertEquals('http://foo.com/we', $processor->process());
 
-        $parser = new Parser('http://foo.com/{var:50}', array('var' => 'welcome'));
-        $this->assertEquals('http://foo.com/welcome', $parser->parse());
+        $processor = new Processor('http://foo.com/{var:50}', array('var' => 'welcome'));
+        $this->assertEquals('http://foo.com/welcome', $processor->process());
     }
 
     public function testExplodeExpansion()
     {
-        $parser = new Parser('http://foo.com/{var*}', array(
+        $processor = new Processor('http://foo.com/{var*}', array(
             'var' => array(
                 12, 23, 43
             ),
         ));
-        $this->assertEquals('http://foo.com/12,23,43', $parser->parse());
+        $this->assertEquals('http://foo.com/12,23,43', $processor->process());
 
-        $parser = new Parser('http://foo.com/{var*}', array(
+        $processor = new Processor('http://foo.com/{var*}', array(
             'var' => array(
                 'foo' => 'bar',
                 'baz' => 'yay',
             ),
         ));
-        $this->assertEquals('http://foo.com/foo=bar,baz=yay', $parser->parse());
+        $this->assertEquals('http://foo.com/foo=bar,baz=yay', $processor->process());
     }
 
     public function testMultipleExpansionsWithNoOperators()
     {
-        $parser = new Parser('http://foo.com/{var0}/{var1:2}/{var2*}/{var3*}', array(
+        $processor = new Processor('http://foo.com/{var0}/{var1:2}/{var2*}/{var3*}', array(
             'var0' => 'bob',
             'var1' => 'hello',
             'var2' => array(
@@ -77,25 +77,70 @@ class ParserTest extends PHPUnit_Framework_TestCase
             ),
         ));
 
-        $this->assertEquals('http://foo.com/bob/he/12,23,43/foo=bar,baz=yay', $parser->parse());
+        $this->assertEquals('http://foo.com/bob/he/12,23,43/foo=bar,baz=yay', $processor->process());
     }
 
     public function testReservedCharsGetEncodedByDefault()
     {
-        $parser = new Parser('http://foo.com/{var}', array('var' => 'welcome!'));
-        $this->assertEquals('http://foo.com/welcome%21', $parser->parse());
+        $processor = new Processor('http://foo.com/{var}', array('var' => 'welcome!'));
+        $this->assertEquals('http://foo.com/welcome%21', $processor->process());
     }
 
     public function testReservedStringExpansion()
     {
-        $parser = new Parser('http://foo.com/{+var}', array('var' => 'welcome!'));
-        $this->assertEquals('http://foo.com/welcome!', $parser->parse());
+        $processor = new Processor('http://foo.com/{+var}', array('var' => 'welcome!'));
+        $this->assertEquals('http://foo.com/welcome!', $processor->process());
     }
 
     public function testFragmentExpansion()
     {
-        $parser = new Parser('http://foo.com/{#var}', array('var' => 'welcome!'));
-        $this->assertEquals('http://foo.com/#welcome!', $parser->parse());
+        $processor = new Processor('http://foo.com/{#var}', array('var' => 'welcome!'));
+        $this->assertEquals('http://foo.com/#welcome!', $processor->process());
+    }
+
+    public function testDotPrefixedExpansion()
+    {
+        $processor = new Processor('http://foo.com/{.var1,var2}', array(
+            'var1' => 'foo',
+            'var2' => 'bar'
+        ));
+        $this->assertEquals('http://foo.com/.foo.bar', $processor->process());
+    }
+
+    public function testPathSegmentsExpansion()
+    {
+        $processor = new Processor('http://foo.com{/var1,var2}', array(
+            'var1' => 'foo',
+            'var2' => 'bar'
+        ));
+        $this->assertEquals('http://foo.com/foo/bar', $processor->process());
+    }
+
+    public function testSemiColonPathExpansion()
+    {
+        $processor = new Processor('http://foo.com/{;var1,var2}', array(
+            'var1' => 'foo',
+            'var2' => 'bar'
+        ));
+        $this->assertEquals('http://foo.com/;var1=foo;var2=bar', $processor->process());
+    }
+
+    public function testFormQueryWithQuestionMarkExpansion()
+    {
+        $processor = new Processor('http://foo.com/{?var1,var2}', array(
+            'var1' => 'foo',
+            'var2' => 'bar'
+        ));
+        $this->assertEquals('http://foo.com/?var1=foo&var2=bar', $processor->process());
+    }
+
+    public function testFormQueryWithAmpersandExpansion()
+    {
+        $processor = new Processor('http://foo.com/?a=b{&var1,var2}', array(
+            'var1' => 'foo',
+            'var2' => 'bar'
+        ));
+        $this->assertEquals('http://foo.com/?a=b&var1=foo&var2=bar', $processor->process());
     }
 
 }
