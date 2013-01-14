@@ -143,4 +143,19 @@ class ProcessorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('http://foo.com/?a=b&var1=foo&var2=bar', $processor->process());
     }
 
+    public function testUriCreation()
+    {
+        $processor = new Processor('{schema}://{domain}{.tld}{/resource}{.format}{?query*}');
+        $processor->setContext(array(
+            'schema' => 'http',
+            'domain' => 'api.foo',
+            'tld' => array('co', 'uk'),
+            'resource' => array('search', 'entries'),
+            'format' => 'json',
+            'query' => array('q' => 'bar', 'sort_by' => 'recent')
+        ));
+
+        $this->assertEquals('http://api.foo.co.uk/search/entries.json?q=bar&sort_by=recent', $processor->process());
+    }
+
 }
