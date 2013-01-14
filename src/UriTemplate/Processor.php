@@ -99,7 +99,7 @@ class Processor
 
             $value = $this->prefix.$value;
 
-            // Replace the Expression with the Value.  We only
+            // Replace the Expression with the Value.
             $uri = str_replace($rawExpression, $value, $uri);
         }
 
