@@ -1,6 +1,7 @@
 {
     "name": "dandoescode/uri-template",
     "description": "A URI Template [RFC6570] parser.",
+    "license": "MIT",
     "authors": [
         {
             "name": "Daniel Horrigan",
