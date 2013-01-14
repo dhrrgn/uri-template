@@ -1,0 +1,13 @@
+{
+    "name": "dandoescode/uri-template",
+    "description": "A URI Template [RFC6570] parser.",
+    "authors": [
+        {
+            "name": "Daniel Horrigan",
+            "email": "me@dandoescode.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "3.8.x-dev"
+    },
+}
